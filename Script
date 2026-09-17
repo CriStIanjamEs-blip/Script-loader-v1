@@ -1,0 +1,419 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+--// ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ScriptLoaderUI"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = playerGui
+
+--// ========== FLOATING CIRCLE ==========
+local circle = Instance.new("ImageButton")
+circle.Name = "ToggleCircle"
+circle.Size = UDim2.new(0, 52, 0, 52)
+circle.Position = UDim2.new(0, 18, 0.5, -26)
+circle.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+circle.AutoButtonColor = false
+circle.Parent = screenGui
+
+local circleCorner = Instance.new("UICorner")
+circleCorner.CornerRadius = UDim.new(1, 0)
+circleCorner.Parent = circle
+
+local circleStroke = Instance.new("UIStroke")
+circleStroke.Thickness = 2.5
+circleStroke.Parent = circle
+
+local circleText = Instance.new("TextLabel")
+circleText.Size = UDim2.new(1, 0, 1, 0)
+circleText.BackgroundTransparency = 1
+circleText.Text = "S"
+circleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+circleText.Font = Enum.Font.GothamBold
+circleText.TextSize = 20
+circleText.Parent = circle
+
+--// ========== MAIN FRAME (Rectangular) ==========
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 520, 0, 300)
+mainFrame.Position = UDim2.new(0.5, -260, 0.5, -150)
+mainFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+mainFrame.BackgroundTransparency = 0.4
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 12)
+mainCorner.Parent = mainFrame
+
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Thickness = 2
+mainStroke.Parent = mainFrame
+
+-- Title Bar
+local titleBar = Instance.new("Frame")
+titleBar.Name = "TitleBar"
+titleBar.Size = UDim2.new(1, 0, 0, 36)
+titleBar.BackgroundColor3 = Color3.fromRGB(26, 26, 34)
+titleBar.BackgroundTransparency = 0.3
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 12)
+titleCorner.Parent = titleBar
+
+local titleFix = Instance.new("Frame")
+titleFix.Size = UDim2.new(1, 0, 0, 12)
+titleFix.Position = UDim2.new(0, 0, 1, -12)
+titleFix.BackgroundColor3 = Color3.fromRGB(26, 26, 34)
+titleFix.BackgroundTransparency = 0.3
+titleFix.BorderSizePixel = 0
+titleFix.Parent = titleBar
+
+local titleText = Instance.new("TextLabel")
+titleText.Size = UDim2.new(1, -40, 1, 0)
+titleText.Position = UDim2.new(0, 14, 0, 0)
+titleText.BackgroundTransparency = 1
+titleText.Text = "Script Loader"
+titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleText.Font = Enum.Font.GothamBold
+titleText.TextSize = 16
+titleText.TextXAlignment = Enum.TextXAlignment.Left
+titleText.Parent = titleBar
+
+-- Close Button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Name = "Close"
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -34, 0, 3)
+closeBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+closeBtn.Text = "✕"
+closeBtn.TextColor3 = Color3.fromRGB(255, 110, 110)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 15
+closeBtn.Parent = titleBar
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 8)
+closeCorner.Parent = closeBtn
+
+-- Credit Label
+local creditLabel = Instance.new("TextLabel")
+creditLabel.Size = UDim2.new(0.6, 0, 0, 18)
+creditLabel.Position = UDim2.new(0, 10, 0, 40)
+creditLabel.BackgroundTransparency = 1
+creditLabel.Text = "Made by xd_dragon992"
+creditLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+creditLabel.Font = Enum.Font.Gotham
+creditLabel.TextSize = 12
+creditLabel.TextXAlignment = Enum.TextXAlignment.Left
+creditLabel.Parent = mainFrame
+
+-- ========== LEFT SIDE - SCRIPT BUTTONS ==========
+local scrollFrame = Instance.new("ScrollingFrame")
+scrollFrame.Name = "ButtonScroll"
+scrollFrame.Size = UDim2.new(0, 280, 1, -90)
+scrollFrame.Position = UDim2.new(0, 10, 0, 62)
+scrollFrame.BackgroundTransparency = 1
+scrollFrame.BorderSizePixel = 0
+scrollFrame.ScrollBarThickness = 4
+scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 120)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 320)
+scrollFrame.Parent = mainFrame
+
+local function createButton(name, text, yPos)
+	local btn = Instance.new("TextButton")
+	btn.Name = name
+	btn.Size = UDim2.new(0, 250, 0, 34)
+	btn.Position = UDim2.new(0, 10, 0, yPos)
+	btn.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+	btn.Text = text
+	btn.TextColor3 = Color3.fromRGB(220, 220, 230)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 14
+	btn.AutoButtonColor = false
+	btn.Parent = scrollFrame
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = btn
+
+	return btn
+end
+
+local mirandaBtn   = createButton("Miranda",    "Miranda",     8)
+local chilliBtn    = createButton("Chilli",     "Chilli",      50)
+local voidshellBtn = createButton("Voidshell",  "Voidshell",   92)
+local bkBtn        = createButton("BKhub",      "BK hub",      134)
+local toolboxBtn   = createButton("Toolbox",    "toolbox hub", 176)
+local ubloaderBtn  = createButton("UBloader",   "UBloader",    218)
+local onhubBtn     = createButton("Onhub",      "Onhub",       260)
+
+-- ========== RIGHT SIDE - FEATURES ==========
+local rightPanel = Instance.new("Frame")
+rightPanel.Name = "RightPanel"
+rightPanel.Size = UDim2.new(0, 200, 1, -90)
+rightPanel.Position = UDim2.new(1, -210, 0, 62)
+rightPanel.BackgroundTransparency = 1
+rightPanel.Parent = mainFrame
+
+local function createToggle(text, yPos)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, -10, 0, 32)
+	btn.Position = UDim2.new(0, 5, 0, yPos)
+	btn.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+	btn.Text = text .. "  [OFF]"
+	btn.TextColor3 = Color3.fromRGB(220, 220, 230)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 12
+	btn.AutoButtonColor = false
+	btn.Parent = rightPanel
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 7)
+	corner.Parent = btn
+
+	return btn
+end
+
+local antiAfkBtn     = createToggle("Anti AFK", 8)
+local hidePlayersBtn = createToggle("Hide Players", 48)
+local noShadowBtn    = createToggle("No Shadow", 88)
+local flatObjBtn     = createToggle("Flat Objects", 128)
+local noTextureBtn   = createToggle("No Texture", 168)
+
+-- Status Label
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, -20, 0, 18)
+statusLabel.Position = UDim2.new(0, 10, 1, -24)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Ready"
+statusLabel.TextColor3 = Color3.fromRGB(160, 160, 170)
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.TextSize = 12
+statusLabel.Parent = mainFrame
+
+--// ========== RGB EFFECT ==========
+local hue = 0
+RunService.RenderStepped:Connect(function(dt)
+	hue = (hue + dt * 0.35) % 1
+	local color = Color3.fromHSV(hue, 0.85, 1)
+
+	titleText.TextColor3 = color
+	creditLabel.TextColor3 = color
+	circleText.TextColor3 = color
+	mainStroke.Color = color
+	circleStroke.Color = color
+end)
+
+--// ========== DRAGGING ==========
+local function makeDraggable(frame, handle)
+	local dragging, dragStart, startPos
+
+	handle.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = frame.Position
+		end
+	end)
+
+	handle.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local delta = input.Position - dragStart
+			frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
+	end)
+end
+
+makeDraggable(circle, circle)
+makeDraggable(mainFrame, titleBar)
+
+--// ========== EVENTS ==========
+circle.MouseButton1Click:Connect(function()
+	mainFrame.Visible = not mainFrame.Visible
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+	mainFrame.Visible = false
+end)
+
+closeBtn.MouseEnter:Connect(function()
+	closeBtn.BackgroundColor3 = Color3.fromRGB(60, 40, 45)
+end)
+closeBtn.MouseLeave:Connect(function()
+	closeBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+end)
+
+local function addHover(btn)
+	btn.MouseEnter:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(50, 50, 60)}):Play()
+	end)
+	btn.MouseLeave:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(35, 35, 42)}):Play()
+	end)
+end
+
+for _, btn in pairs({mirandaBtn, chilliBtn, voidshellBtn, bkBtn, toolboxBtn, ubloaderBtn, onhubBtn, antiAfkBtn, hidePlayersBtn, noShadowBtn, flatObjBtn, noTextureBtn}) do
+	addHover(btn)
+end
+
+-- ========== FEATURE TOGGLES ==========
+local antiAfkEnabled = false
+local hidePlayersEnabled = false
+local noShadowEnabled = false
+local flatEnabled = false
+local noTextureEnabled = false
+
+-- Anti AFK
+antiAfkBtn.MouseButton1Click:Connect(function()
+	antiAfkEnabled = not antiAfkEnabled
+	antiAfkBtn.Text = "Anti AFK  [" .. (antiAfkEnabled and "ON" or "OFF") .. "]"
+	statusLabel.Text = antiAfkEnabled and "Anti AFK Enabled" or "Anti AFK Disabled"
+	statusLabel.TextColor3 = antiAfkEnabled and Color3.fromRGB(80, 220, 120) or Color3.fromRGB(255, 150, 80)
+end)
+
+task.spawn(function()
+	while true do
+		task.wait(25)
+		if antiAfkEnabled then
+			pcall(function()
+				local vu = game:GetService("VirtualUser")
+				vu:CaptureController()
+				vu:ClickButton2(Vector2.new())
+			end)
+		end
+	end
+end)
+
+-- Hide Players
+hidePlayersBtn.MouseButton1Click:Connect(function()
+	hidePlayersEnabled = not hidePlayersEnabled
+	hidePlayersBtn.Text = "Hide Players  [" .. (hidePlayersEnabled and "ON" or "OFF") .. "]"
+
+	for _, plr in pairs(Players:GetPlayers()) do
+		if plr \~= player and plr.Character then
+			for _, v in pairs(plr.Character:GetDescendants()) do
+				if v:IsA("BasePart") or v:IsA("Decal") or v:IsA("Texture") then
+					pcall(function()
+						v.LocalTransparencyModifier = hidePlayersEnabled and 1 or 0
+					end)
+				end
+			end
+		end
+	end
+
+	statusLabel.Text = hidePlayersEnabled and "Players Hidden" or "Players Visible"
+	statusLabel.TextColor3 = hidePlayersEnabled and Color3.fromRGB(80, 220, 120) or Color3.fromRGB(255, 150, 80)
+end)
+
+-- No Shadow
+noShadowBtn.MouseButton1Click:Connect(function()
+	noShadowEnabled = not noShadowEnabled
+	noShadowBtn.Text = "No Shadow  [" .. (noShadowEnabled and "ON" or "OFF") .. "]"
+
+	pcall(function()
+		Lighting.GlobalShadows = not noShadowEnabled
+	end)
+
+	statusLabel.Text = noShadowEnabled and "Shadows Disabled" or "Shadows Enabled"
+	statusLabel.TextColor3 = noShadowEnabled and Color3.fromRGB(80, 220, 120) or Color3.fromRGB(255, 150, 80)
+end)
+
+-- Flat Objects
+flatObjBtn.MouseButton1Click:Connect(function()
+	flatEnabled = not flatEnabled
+	flatObjBtn.Text = "Flat Objects  [" .. (flatEnabled and "ON" or "OFF") .. "]"
+
+	if flatEnabled then
+		for _, obj in pairs(workspace:GetDescendants()) do
+			if obj:IsA("BasePart") then
+				pcall(function()
+					obj.Material = Enum.Material.SmoothPlastic
+				end)
+			end
+		end
+		statusLabel.Text = "Flat Objects On"
+		statusLabel.TextColor3 = Color3.fromRGB(80, 220, 120)
+	else
+		statusLabel.Text = "Flat Objects Off"
+		statusLabel.TextColor3 = Color3.fromRGB(255, 150, 80)
+	end
+end)
+
+-- No Texture
+noTextureBtn.MouseButton1Click:Connect(function()
+	noTextureEnabled = not noTextureEnabled
+	noTextureBtn.Text = "No Texture  [" .. (noTextureEnabled and "ON" or "OFF") .. "]"
+
+	for _, obj in pairs(workspace:GetDescendants()) do
+		if obj:IsA("Decal") or obj:IsA("Texture") then
+			pcall(function()
+				obj.Transparency = noTextureEnabled and 1 or 0
+			end)
+		end
+		if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") then
+			pcall(function()
+				obj.Enabled = not noTextureEnabled
+			end)
+		end
+	end
+
+	statusLabel.Text = noTextureEnabled and "Textures Disabled" or "Textures Enabled"
+	statusLabel.TextColor3 = noTextureEnabled and Color3.fromRGB(80, 220, 120) or Color3.fromRGB(255, 150, 80)
+end)
+
+-- ========== LOADER SCRIPTS ==========
+local function loadScript(name, url)
+	statusLabel.Text = "Loading " .. name .. "..."
+	statusLabel.TextColor3 = Color3.fromRGB(255, 200, 60)
+
+	local success, err = pcall(function()
+		loadstring(game:HttpGet(url))()
+	end)
+
+	if success then
+		statusLabel.Text = name .. " Loaded!"
+		statusLabel.TextColor3 = Color3.fromRGB(80, 220, 120)
+	else
+		statusLabel.Text = "Error: " .. tostring(err)
+		statusLabel.TextColor3 = Color3.fromRGB(255, 90, 90)
+	end
+end
+
+mirandaBtn.MouseButton1Click:Connect(function()
+	loadScript("Miranda", "https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/stealaeggs")
+end)
+chilliBtn.MouseButton1Click:Connect(function()
+	loadScript("Chilli", "https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua")
+end)
+voidshellBtn.MouseButton1Click:Connect(function()
+	loadScript("Voidshell", "https://raw.githubusercontent.com/VoidShell-null/VoidShell-Hub/refs/heads/main/Scripts/StealAnEgg.luau")
+end)
+bkBtn.MouseButton1Click:Connect(function()
+	loadScript("BK hub", "https://api.luarmor.net/files/v4/loaders/9ee4edde227ac85f50872bf9e4226508.lua")
+end)
+toolboxBtn.MouseButton1Click:Connect(function()
+	loadScript("toolbox hub", "https://raw.githubusercontent.com/Abdullahking20/loader-lua/main/loader")
+end)
+ubloaderBtn.MouseButton1Click:Connect(function()
+	loadScript("UBloader", "https://raw.githubusercontent.com/TeamUBHub/UBLoader/refs/heads/main/Loader.lua")
+end)
+onhubBtn.MouseButton1Click:Connect(function()
+	loadScript("Onhub", "https://raw.githubusercontent.com/davizin713/ONhub/refs/heads/main/script.lua")
+end)
