@@ -1,0 +1,789 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+--// ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ScriptLoaderUI"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.Parent = playerGui
+
+--// ========== FLOATING CIRCLE ==========
+local circle = Instance.new("ImageButton")
+circle.Name = "ToggleCircle"
+circle.Size = UDim2.new(0, 52, 0, 52)
+circle.Position = UDim2.new(0, 18, 0.5, -26)
+circle.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+circle.AutoButtonColor = false
+circle.Parent = screenGui
+
+local circleCorner = Instance.new("UICorner")
+circleCorner.CornerRadius = UDim.new(1, 0)
+circleCorner.Parent = circle
+
+local circleStroke = Instance.new("UIStroke")
+circleStroke.Thickness = 2.5
+circleStroke.Parent = circle
+
+local circleText = Instance.new("TextLabel")
+circleText.Size = UDim2.new(1, 0, 1, 0)
+circleText.BackgroundTransparency = 1
+circleText.Text = "S"
+circleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+circleText.Font = Enum.Font.GothamBold
+circleText.TextSize = 20
+circleText.Parent = circle
+
+--// ========== MAIN FRAME ==========
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 500, 0, 340)
+mainFrame.Position = UDim2.new(0.5, -250, 0.5, -170)
+mainFrame.BackgroundColor3 = Color3.fromRGB(16, 16, 22)
+mainFrame.BackgroundTransparency = 0.4
+mainFrame.Visible = false
+mainFrame.Parent = screenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 12)
+mainCorner.Parent = mainFrame
+
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Thickness = 2
+mainStroke.Parent = mainFrame
+
+-- Title Bar
+local titleBar = Instance.new("Frame")
+titleBar.Name = "TitleBar"
+titleBar.Size = UDim2.new(1, 0, 0, 36)
+titleBar.BackgroundColor3 = Color3.fromRGB(26, 26, 34)
+titleBar.BackgroundTransparency = 0.3
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 12)
+titleCorner.Parent = titleBar
+
+local titleFix = Instance.new("Frame")
+titleFix.Size = UDim2.new(1, 0, 0, 12)
+titleFix.Position = UDim2.new(0, 0, 1, -12)
+titleFix.BackgroundColor3 = Color3.fromRGB(26, 26, 34)
+titleFix.BackgroundTransparency = 0.3
+titleFix.BorderSizePixel = 0
+titleFix.Parent = titleBar
+
+local titleText = Instance.new("TextLabel")
+titleText.Size = UDim2.new(1, -40, 1, 0)
+titleText.Position = UDim2.new(0, 14, 0, 0)
+titleText.BackgroundTransparency = 1
+titleText.Text = "Script Loader"
+titleText.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleText.Font = Enum.Font.GothamBold
+titleText.TextSize = 16
+titleText.TextXAlignment = Enum.TextXAlignment.Left
+titleText.Parent = titleBar
+
+-- Close Button
+local closeBtn = Instance.new("TextButton")
+closeBtn.Name = "Close"
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -34, 0, 3)
+closeBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+closeBtn.Text = "X"
+closeBtn.TextColor3 = Color3.fromRGB(255, 110, 110)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 15
+closeBtn.Parent = titleBar
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 8)
+closeCorner.Parent = closeBtn
+
+-- ========== RIGHT SIDE TABS ==========
+local tabContainer = Instance.new("Frame")
+tabContainer.Name = "Tabs"
+tabContainer.Size = UDim2.new(0, 90, 1, -36)
+tabContainer.Position = UDim2.new(1, -90, 0, 36)
+tabContainer.BackgroundTransparency = 1
+tabContainer.Parent = mainFrame
+
+local function createTab(name, text, yPos)
+	local btn = Instance.new("TextButton")
+	btn.Name = name
+	btn.Size = UDim2.new(1, -8, 0, 36)
+	btn.Position = UDim2.new(0, 4, 0, yPos)
+	btn.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+	btn.Text = text
+	btn.TextColor3 = Color3.fromRGB(200, 200, 210)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 13
+	btn.AutoButtonColor = false
+	btn.Parent = tabContainer
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 7)
+	corner.Parent = btn
+	return btn
+end
+
+local loaderTab  = createTab("Loader",  "Loader",  10)
+local serverTab  = createTab("Server",  "Server",  52)
+local fpsTab     = createTab("FPS",     "FPS",     94)
+local creditTab  = createTab("Credit",  "Credit",  136)
+local miscTab    = createTab("Misc",    "Misc",    178) -- NEW TAB
+
+-- ========== CONTENT AREA ==========
+local contentFrame = Instance.new("Frame")
+contentFrame.Name = "Content"
+contentFrame.Size = UDim2.new(1, -100, 1, -50)
+contentFrame.Position = UDim2.new(0, 8, 0, 42)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = mainFrame
+
+-- Loader Page
+local loaderPage = Instance.new("ScrollingFrame")
+loaderPage.Name = "LoaderPage"
+loaderPage.Size = UDim2.new(1, 0, 1, 0)
+loaderPage.BackgroundTransparency = 1
+loaderPage.BorderSizePixel = 0
+loaderPage.ScrollBarThickness = 4
+loaderPage.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 120)
+loaderPage.CanvasSize = UDim2.new(0, 0, 0, 1050)
+loaderPage.Visible = true
+loaderPage.Parent = contentFrame
+
+-- Server Page
+local serverPage = Instance.new("Frame")
+serverPage.Name = "ServerPage"
+serverPage.Size = UDim2.new(1, 0, 1, 0)
+serverPage.BackgroundTransparency = 1
+serverPage.Visible = false
+serverPage.Parent = contentFrame
+
+-- FPS Page
+local fpsPage = Instance.new("Frame")
+fpsPage.Name = "FPSPage"
+fpsPage.Size = UDim2.new(1, 0, 1, 0)
+fpsPage.BackgroundTransparency = 1
+fpsPage.Visible = false
+fpsPage.Parent = contentFrame
+
+-- Credit Page
+local creditPage = Instance.new("Frame")
+creditPage.Name = "CreditPage"
+creditPage.Size = UDim2.new(1, 0, 1, 0)
+creditPage.BackgroundTransparency = 1
+creditPage.Visible = false
+creditPage.Parent = contentFrame
+
+-- ========== MISC PAGE (NEW) ==========
+local miscPage = Instance.new("Frame")
+miscPage.Name = "MiscPage"
+miscPage.Size = UDim2.new(1, 0, 1, 0)
+miscPage.BackgroundTransparency = 1
+miscPage.Visible = false
+miscPage.Parent = contentFrame
+
+-- God Mode Button
+local godModeBtn = Instance.new("TextButton")
+godModeBtn.Name = "GodMode"
+godModeBtn.Size = UDim2.new(0, 220, 0, 36)
+godModeBtn.Position = UDim2.new(0.5, -110, 0, 15)
+godModeBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+godModeBtn.Text = "God Mode: OFF"
+godModeBtn.TextColor3 = Color3.fromRGB(220, 220, 230)
+godModeBtn.Font = Enum.Font.GothamBold
+godModeBtn.TextSize = 14
+godModeBtn.AutoButtonColor = false
+godModeBtn.Parent = miscPage
+
+local godCorner = Instance.new("UICorner")
+godCorner.CornerRadius = UDim.new(0, 8)
+godCorner.Parent = godModeBtn
+
+-- FPS + MS Display Label
+local fpsMsLabel = Instance.new("TextLabel")
+fpsMsLabel.Name = "FPSMS"
+fpsMsLabel.Size = UDim2.new(0, 260, 0, 30)
+fpsMsLabel.Position = UDim2.new(0.5, -130, 0, 65)
+fpsMsLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+fpsMsLabel.Text = "FPS: --  |  MS: --"
+fpsMsLabel.TextColor3 = Color3.fromRGB(180, 255, 180)
+fpsMsLabel.Font = Enum.Font.GothamBold
+fpsMsLabel.TextSize = 14
+fpsMsLabel.Parent = miscPage
+
+local fpsMsCorner = Instance.new("UICorner")
+fpsMsCorner.CornerRadius = UDim.new(0, 8)
+fpsMsCorner.Parent = fpsMsLabel
+
+-- Avatar Weight Section
+local weightTitle = Instance.new("TextLabel")
+weightTitle.Size = UDim2.new(0, 260, 0, 22)
+weightTitle.Position = UDim2.new(0.5, -130, 0, 115)
+weightTitle.BackgroundTransparency = 1
+weightTitle.Text = "Avatar Weight Editor"
+weightTitle.TextColor3 = Color3.fromRGB(220, 220, 230)
+weightTitle.Font = Enum.Font.GothamBold
+weightTitle.TextSize = 14
+weightTitle.Parent = miscPage
+
+local weightBox = Instance.new("TextBox")
+weightBox.Name = "WeightInput"
+weightBox.Size = UDim2.new(0, 160, 0, 32)
+weightBox.Position = UDim2.new(0.5, -130, 0, 145)
+weightBox.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+weightBox.Text = "1"
+weightBox.PlaceholderText = "Enter weight (e.g. 0.5)"
+weightBox.TextColor3 = Color3.fromRGB(220, 220, 230)
+weightBox.Font = Enum.Font.Gotham
+weightBox.TextSize = 14
+weightBox.ClearTextOnFocus = false
+weightBox.Parent = miscPage
+
+local weightBoxCorner = Instance.new("UICorner")
+weightBoxCorner.CornerRadius = UDim.new(0, 8)
+weightBoxCorner.Parent = weightBox
+
+local applyWeightBtn = Instance.new("TextButton")
+applyWeightBtn.Name = "ApplyWeight"
+applyWeightBtn.Size = UDim2.new(0, 90, 0, 32)
+applyWeightBtn.Position = UDim2.new(0.5, 40, 0, 145)
+applyWeightBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+applyWeightBtn.Text = "Apply"
+applyWeightBtn.TextColor3 = Color3.fromRGB(220, 220, 230)
+applyWeightBtn.Font = Enum.Font.GothamBold
+applyWeightBtn.TextSize = 13
+applyWeightBtn.AutoButtonColor = false
+applyWeightBtn.Parent = miscPage
+
+local applyCorner = Instance.new("UICorner")
+applyCorner.CornerRadius = UDim.new(0, 8)
+applyCorner.Parent = applyWeightBtn
+
+local weightInfo = Instance.new("TextLabel")
+weightInfo.Size = UDim2.new(0, 280, 0, 40)
+weightInfo.Position = UDim2.new(0.5, -140, 0, 190)
+weightInfo.BackgroundTransparency = 1
+weightInfo.Text = "Default ≈ 0.7\nLower = lighter | Higher = heavier"
+weightInfo.TextColor3 = Color3.fromRGB(150, 150, 165)
+weightInfo.Font = Enum.Font.Gotham
+weightInfo.TextSize = 12
+weightInfo.TextWrapped = true
+weightInfo.Parent = miscPage
+
+-- ========== LOADER BUTTONS ==========
+local function createButton(name, text, yPos)
+	local btn = Instance.new("TextButton")
+	btn.Name = name
+	btn.Size = UDim2.new(0, 250, 0, 34)
+	btn.Position = UDim2.new(0.5, -125, 0, yPos)
+	btn.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+	btn.Text = text
+	btn.TextColor3 = Color3.fromRGB(220, 220, 230)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 14
+	btn.AutoButtonColor = false
+	btn.Parent = loaderPage
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = btn
+	return btn
+end
+
+local mirandaBtn   = createButton("Miranda",    "Miranda",      8)
+local chilliBtn    = createButton("Chilli",     "Chilli",       50)
+local voidshellBtn = createButton("Voidshell",  "Voidshell",    92)
+local bkBtn        = createButton("BKhub",      "BK hub",       134)
+local toolboxBtn   = createButton("Toolbox",    "toolbox hub",  176)
+local ubloaderBtn  = createButton("UBloader",   "UBloader",     218)
+local onhubBtn     = createButton("Onhub",      "Onhub",        260)
+local blyxoBtn     = createButton("Blyxohub",   "Blyxohub",     302)
+local senaBtn      = createButton("Senahub",    "Sena hub",     344)
+local zeroinBtn    = createButton("Zeroin",     "Zeroin hub",   386)
+local foxnameBtn   = createButton("Foxname",    "Foxname",      428)
+local fyyBtn       = createButton("Fyyhub",     "Fyy hub",      470)
+local decodeBtn    = createButton("Decode",     "decode hub",   512)
+local ouroborosBtn = createButton("Ouroboros",  "Ouroboros hub",554)
+local nevaBtn      = createButton("Nevahub",    "Neva hub",     596)
+local nighthubBtn  = createButton("Nighthub",   "Nighthub",     638)
+local axursBtn     = createButton("Axurshub",   "Axurs hub",    680)
+local wisBtn       = createButton("Wishub",     "Wis hub",      722)
+local chiyoBtn     = createButton("Chiyohub",   "Chiyohub",     764)
+local asvraBtn     = createButton("Asvrahub",   "Asvrahub",     806)
+local ajjansBtn    = createButton("Ajjanshub",  "Ajjanshub",    848)
+local potatoBtn    = createButton("Potatohub",  "Potato hub",   890)
+local siopsBtn     = createButton("Siopshub",   "Siops hub",    932)
+
+-- ========== SERVER FINDER UI ==========
+local findBtn = Instance.new("TextButton")
+findBtn.Size = UDim2.new(0, 220, 0, 36)
+findBtn.Position = UDim2.new(0.5, -110, 0, 10)
+findBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+findBtn.Text = "Find Low Player Servers"
+findBtn.TextColor3 = Color3.fromRGB(220, 220, 230)
+findBtn.Font = Enum.Font.GothamBold
+findBtn.TextSize = 13
+findBtn.AutoButtonColor = false
+findBtn.Parent = serverPage
+
+local findCorner = Instance.new("UICorner")
+findCorner.CornerRadius = UDim.new(0, 8)
+findCorner.Parent = findBtn
+
+local serverScroll = Instance.new("ScrollingFrame")
+serverScroll.Name = "ServerList"
+serverScroll.Size = UDim2.new(1, -10, 1, -60)
+serverScroll.Position = UDim2.new(0, 5, 0, 55)
+serverScroll.BackgroundTransparency = 1
+serverScroll.BorderSizePixel = 0
+serverScroll.ScrollBarThickness = 4
+serverScroll.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 120)
+serverScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+serverScroll.Parent = serverPage
+
+-- ========== FPS BOOSTER UI ==========
+local fpsBoostBtn = Instance.new("TextButton")
+fpsBoostBtn.Size = UDim2.new(0, 240, 0, 45)
+fpsBoostBtn.Position = UDim2.new(0.5, -120, 0.4, 0)
+fpsBoostBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+fpsBoostBtn.Text = "FPS Boost"
+fpsBoostBtn.TextColor3 = Color3.fromRGB(220, 220, 230)
+fpsBoostBtn.Font = Enum.Font.GothamBold
+fpsBoostBtn.TextSize = 16
+fpsBoostBtn.AutoButtonColor = false
+fpsBoostBtn.Parent = fpsPage
+
+local fpsCorner = Instance.new("UICorner")
+fpsCorner.CornerRadius = UDim.new(0, 9)
+fpsCorner.Parent = fpsBoostBtn
+
+-- ========== CREDIT PAGE ==========
+local creditText1 = Instance.new("TextLabel")
+creditText1.Size = UDim2.new(1, 0, 0, 30)
+creditText1.Position = UDim2.new(0, 0, 0.32, 0)
+creditText1.BackgroundTransparency = 1
+creditText1.Text = "made by xd_dragon992"
+creditText1.TextColor3 = Color3.fromRGB(230, 230, 240)
+creditText1.Font = Enum.Font.GothamBold
+creditText1.TextSize = 18
+creditText1.Parent = creditPage
+
+local creditText2 = Instance.new("TextLabel")
+creditText2.Size = UDim2.new(1, 0, 0, 30)
+creditText2.Position = UDim2.new(0, 0, 0.48, 0)
+creditText2.BackgroundTransparency = 1
+creditText2.Text = "qoxzxk on tt"
+creditText2.TextColor3 = Color3.fromRGB(180, 180, 195)
+creditText2.Font = Enum.Font.Gotham
+creditText2.TextSize = 15
+creditText2.Parent = creditPage
+
+-- Status Label
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, -100, 0, 18)
+statusLabel.Position = UDim2.new(0, 10, 1, -24)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Ready"
+statusLabel.TextColor3 = Color3.fromRGB(160, 160, 170)
+statusLabel.Font = Enum.Font.Gotham
+statusLabel.TextSize = 12
+statusLabel.Parent = mainFrame
+
+-- ========== RGB EFFECT ==========
+local hue = 0
+RunService.RenderStepped:Connect(function(dt)
+	hue = (hue + dt * 0.35) % 1
+	local color = Color3.fromHSV(hue, 0.85, 1)
+	titleText.TextColor3 = color
+	circleText.TextColor3 = color
+	mainStroke.Color = color
+	circleStroke.Color = color
+end)
+
+-- ========== TAB SWITCHING ==========
+local function switchTab(tabName)
+	loaderPage.Visible = (tabName == "Loader")
+	serverPage.Visible = (tabName == "Server")
+	fpsPage.Visible    = (tabName == "FPS")
+	creditPage.Visible = (tabName == "Credit")
+	miscPage.Visible   = (tabName == "Misc")
+
+	loaderTab.BackgroundColor3  = (tabName == "Loader")  and Color3.fromRGB(55, 55, 65) or Color3.fromRGB(30, 30, 38)
+	serverTab.BackgroundColor3  = (tabName == "Server")  and Color3.fromRGB(55, 55, 65) or Color3.fromRGB(30, 30, 38)
+	fpsTab.BackgroundColor3     = (tabName == "FPS")     and Color3.fromRGB(55, 55, 65) or Color3.fromRGB(30, 30, 38)
+	creditTab.BackgroundColor3  = (tabName == "Credit")  and Color3.fromRGB(55, 55, 65) or Color3.fromRGB(30, 30, 38)
+	miscTab.BackgroundColor3    = (tabName == "Misc")    and Color3.fromRGB(55, 55, 65) or Color3.fromRGB(30, 30, 38)
+end
+
+loaderTab.MouseButton1Click:Connect(function() switchTab("Loader") end)
+serverTab.MouseButton1Click:Connect(function() switchTab("Server") end)
+fpsTab.MouseButton1Click:Connect(function() switchTab("FPS") end)
+creditTab.MouseButton1Click:Connect(function() switchTab("Credit") end)
+miscTab.MouseButton1Click:Connect(function() switchTab("Misc") end)
+
+-- ========== DRAGGING ==========
+local function makeDraggable(frame, handle)
+	local dragging, dragStart, startPos
+	handle.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = frame.Position
+		end
+	end)
+	handle.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local delta = input.Position - dragStart
+			frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
+	end)
+end
+makeDraggable(circle, circle)
+makeDraggable(mainFrame, titleBar)
+
+-- ========== BASIC EVENTS ==========
+circle.MouseButton1Click:Connect(function()
+	mainFrame.Visible = not mainFrame.Visible
+end)
+closeBtn.MouseButton1Click:Connect(function()
+	mainFrame.Visible = false
+end)
+
+local function addHover(btn)
+	btn.MouseEnter:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(50, 50, 60)}):Play()
+	end)
+	btn.MouseLeave:Connect(function()
+		TweenService:Create(btn, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(35, 35, 42)}):Play()
+	end)
+end
+
+local allButtons = {
+	mirandaBtn, chilliBtn, voidshellBtn, bkBtn, toolboxBtn, ubloaderBtn, onhubBtn,
+	blyxoBtn, senaBtn, zeroinBtn, foxnameBtn, fyyBtn, decodeBtn, ouroborosBtn,
+	nevaBtn, nighthubBtn, axursBtn, wisBtn, chiyoBtn, asvraBtn, ajjansBtn, potatoBtn, siopsBtn,
+	findBtn, fpsBoostBtn, godModeBtn, applyWeightBtn
+}
+for _, btn in pairs(allButtons) do
+	addHover(btn)
+end
+
+-- ========== SERVER FINDER LOGIC ==========
+local function clearServerList()
+	for _, child in pairs(serverScroll:GetChildren()) do
+		if child:IsA("Frame") then
+			child:Destroy()
+		end
+	end
+end
+
+local function createServerEntry(jobId, players, yPos)
+	local entry = Instance.new("Frame")
+	entry.Size = UDim2.new(1, -10, 0, 40)
+	entry.Position = UDim2.new(0, 5, 0, yPos)
+	entry.BackgroundColor3 = Color3.fromRGB(30, 30, 38)
+	entry.Parent = serverScroll
+
+	local entryCorner = Instance.new("UICorner")
+	entryCorner.CornerRadius = UDim.new(0, 6)
+	entryCorner.Parent = entry
+
+	local playerLabel = Instance.new("TextLabel")
+	playerLabel.Size = UDim2.new(0.55, 0, 1, 0)
+	playerLabel.Position = UDim2.new(0, 10, 0, 0)
+	playerLabel.BackgroundTransparency = 1
+	playerLabel.Text = players .. " Player" .. (players == 1 and "" or "s")
+	playerLabel.TextColor3 = Color3.fromRGB(220, 220, 230)
+	playerLabel.Font = Enum.Font.GothamBold
+	playerLabel.TextSize = 13
+	playerLabel.TextXAlignment = Enum.TextXAlignment.Left
+	playerLabel.Parent = entry
+
+	local joinBtn = Instance.new("TextButton")
+	joinBtn.Size = UDim2.new(0, 80, 0, 28)
+	joinBtn.Position = UDim2.new(1, -90, 0.5, -14)
+	joinBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+	joinBtn.Text = "Join"
+	joinBtn.TextColor3 = Color3.fromRGB(220, 220, 230)
+	joinBtn.Font = Enum.Font.GothamBold
+	joinBtn.TextSize = 12
+	joinBtn.AutoButtonColor = false
+	joinBtn.Parent = entry
+
+	local joinCorner = Instance.new("UICorner")
+	joinCorner.CornerRadius = UDim.new(0, 6)
+	joinCorner.Parent = joinBtn
+	addHover(joinBtn)
+
+	joinBtn.MouseButton1Click:Connect(function()
+		statusLabel.Text = "Joining server (" .. players .. " players)..."
+		statusLabel.TextColor3 = Color3.fromRGB(255, 200, 60)
+		pcall(function()
+			TeleportService:TeleportToPlaceInstance(game.PlaceId, jobId, player)
+		end)
+	end)
+end
+
+findBtn.MouseButton1Click:Connect(function()
+	statusLabel.Text = "Searching servers..."
+	statusLabel.TextColor3 = Color3.fromRGB(255, 200, 60)
+	clearServerList()
+	task.spawn(function()
+		local success, result = pcall(function()
+			return HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+		end)
+		if success and result and result.data then
+			table.sort(result.data, function(a, b)
+				return (a.playing or 999) < (b.playing or 999)
+			end)
+			local count = 0
+			local y = 5
+			for _, server in pairs(result.data) do
+				if typeof(server.playing) == "number" and server.playing >= 1 and count < 12 then
+					createServerEntry(server.id, server.playing, y)
+					y = y + 48
+					count = count + 1
+				end
+			end
+			serverScroll.CanvasSize = UDim2.new(0, 0, 0, y + 10)
+			if count > 0 then
+				statusLabel.Text = "Found " .. count .. " low player servers"
+				statusLabel.TextColor3 = Color3.fromRGB(80, 220, 120)
+			else
+				statusLabel.Text = "No suitable servers found"
+				statusLabel.TextColor3 = Color3.fromRGB(255, 150, 80)
+			end
+		else
+			statusLabel.Text = "Failed to fetch servers"
+			statusLabel.TextColor3 = Color3.fromRGB(255, 90, 90)
+		end
+	end)
+end)
+
+-- ========== FPS BOOST ==========
+fpsBoostBtn.MouseButton1Click:Connect(function()
+	statusLabel.Text = "Loading FPS Boost..."
+	statusLabel.TextColor3 = Color3.fromRGB(255, 200, 60)
+	local success, err = pcall(function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/CriStIanjamEs-blip/Fps-boost/refs/heads/main/Fps%20booster"))()
+	end)
+	if success then
+		statusLabel.Text = "FPS Boost Loaded!"
+		statusLabel.TextColor3 = Color3.fromRGB(80, 220, 120)
+	else
+		statusLabel.Text = "Error loading FPS Boost"
+		statusLabel.TextColor3 = Color3.fromRGB(255, 90, 90)
+	end
+end)
+
+-- ========== LOADER SCRIPTS ==========
+local function loadScript(name, url)
+	statusLabel.Text = "Loading " .. name .. "..."
+	statusLabel.TextColor3 = Color3.fromRGB(255, 200, 60)
+	local success, err = pcall(function()
+		loadstring(game:HttpGet(url))()
+	end)
+	if success then
+		statusLabel.Text = name .. " Loaded!"
+		statusLabel.TextColor3 = Color3.fromRGB(80, 220, 120)
+	else
+		statusLabel.Text = "Error: " .. tostring(err)
+		statusLabel.TextColor3 = Color3.fromRGB(255, 90, 90)
+	end
+end
+
+mirandaBtn.MouseButton1Click:Connect(function()
+	loadScript("Miranda", "https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/stealaeggs")
+end)
+chilliBtn.MouseButton1Click:Connect(function()
+	loadScript("Chilli", "https://raw.githubusercontent.com/tienkhanh1/spicy/main/Chilli.lua")
+end)
+voidshellBtn.MouseButton1Click:Connect(function()
+	loadScript("Voidshell", "https://raw.githubusercontent.com/VoidShell-null/VoidShell-Hub/refs/heads/main/Scripts/StealAnEgg.luau")
+end)
+bkBtn.MouseButton1Click:Connect(function()
+	loadScript("BK hub", "https://api.luarmor.net/files/v4/loaders/9ee4edde227ac85f50872bf9e4226508.lua")
+end)
+toolboxBtn.MouseButton1Click:Connect(function()
+	loadScript("toolbox hub", "https://raw.githubusercontent.com/Abdullahking20/loader-lua/main/loader")
+end)
+ubloaderBtn.MouseButton1Click:Connect(function()
+	loadScript("UBloader", "https://raw.githubusercontent.com/TeamUBHub/UBLoader/refs/heads/main/Loader.lua")
+end)
+onhubBtn.MouseButton1Click:Connect(function()
+	loadScript("Onhub", "https://raw.githubusercontent.com/davizin713/ONhub/refs/heads/main/script.lua")
+end)
+blyxoBtn.MouseButton1Click:Connect(function()
+	loadScript("Blyxohub", "https://flowauth.net/v1/loaders/69d3463240384f3a73fbe32c178093a2.lua")
+end)
+senaBtn.MouseButton1Click:Connect(function()
+	loadScript("Sena hub", "https://raw.githubusercontent.com/senarblx/sena/refs/heads/main/senav3go")
+end)
+zeroinBtn.MouseButton1Click:Connect(function()
+	loadScript("Zeroin hub", "https://zeroinhub.com/api/script")
+end)
+foxnameBtn.MouseButton1Click:Connect(function()
+	loadScript("Foxname", "https://raw.githubusercontent.com/caomod2077/Script/refs/heads/main/Fn-stealanegg.lua")
+end)
+fyyBtn.MouseButton1Click:Connect(function()
+	loadScript("Fyy hub", "https://FyyCommunity.my.id")
+end)
+decodeBtn.MouseButton1Click:Connect(function()
+	loadScript("decode hub", "https://raw.githubusercontent.com/ItzYumi/Decode/refs/heads/main/DE%3ACODE.lua")
+end)
+ouroborosBtn.MouseButton1Click:Connect(function()
+	loadScript("Ouroboros hub", "https://raw.githubusercontent.com/joustingmatch/Ouroboros/main/loader.lua")
+end)
+nevaBtn.MouseButton1Click:Connect(function()
+	loadScript("Neva hub", "https://raw.githubusercontent.com/VEZ2/NEVAHUB/main/2")
+end)
+nighthubBtn.MouseButton1Click:Connect(function()
+	loadScript("Nighthub", "https://raw.githubusercontent.com/WhiteX1208/Scripts/refs/heads/main/StealAnEggs.luau")
+end)
+axursBtn.MouseButton1Click:Connect(function()
+	loadScript("Axurs hub", "https://raw.githubusercontent.com/XE3Scripts/Axur-sGamesHub/refs/heads/main/StealAnEgg")
+end)
+wisBtn.MouseButton1Click:Connect(function()
+	loadScript("Wis hub", "https://api.wishub.cloud/files/loader.lua")
+end)
+chiyoBtn.MouseButton1Click:Connect(function()
+	loadScript("Chiyohub", "https://raw.githubusercontent.com/kaisenlmao/loader/refs/heads/main/chiyo.lua")
+end)
+asvraBtn.MouseButton1Click:Connect(function()
+	loadScript("Asvrahub", "https://raw.githubusercontent.com/asvraRoblox/stealegg/refs/heads/main/main")
+end)
+ajjansBtn.MouseButton1Click:Connect(function()
+	loadScript("Ajjanshub", "https://api.luarmor.net/files/v4/loaders/359e97f8618e9008afe5f496184ebb7c.lua")
+end)
+potatoBtn.MouseButton1Click:Connect(function()
+	loadScript("Potato hub", "https://raw.githubusercontent.com/potatohub67/potatoscripts/refs/heads/main/stealaegg.lua")
+end)
+siopsBtn.MouseButton1Click:Connect(function()
+	loadScript("Siops hub", "https://api.saiops.cc/scripts/Steal-An-Egg-Script.lua")
+end)
+
+-- ========== MISC FEATURES ==========
+
+-- God Mode
+local godModeEnabled = false
+local godConnection = nil
+
+godModeBtn.MouseButton1Click:Connect(function()
+	godModeEnabled = not godModeEnabled
+
+	if godModeEnabled then
+		godModeBtn.Text = "God Mode: ON"
+		godModeBtn.BackgroundColor3 = Color3.fromRGB(40, 90, 50)
+		statusLabel.Text = "God Mode Enabled"
+		statusLabel.TextColor3 = Color3.fromRGB(80, 220, 120)
+
+		local function enableGod(char)
+			local humanoid = char:FindFirstChildOfClass("Humanoid")
+			if humanoid then
+				if godConnection then
+					godConnection:Disconnect()
+				end
+				godConnection = humanoid.HealthChanged:Connect(function()
+					if godModeEnabled and humanoid.Health < humanoid.MaxHealth then
+						humanoid.Health = humanoid.MaxHealth
+					end
+				end)
+				humanoid.Health = humanoid.MaxHealth
+			end
+		end
+
+		if player.Character then
+			enableGod(player.Character)
+		end
+
+		player.CharacterAdded:Connect(function(char)
+			if godModeEnabled then
+				task.wait(0.3)
+				enableGod(char)
+			end
+		end)
+	else
+		godModeBtn.Text = "God Mode: OFF"
+		godModeBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 42)
+		statusLabel.Text = "God Mode Disabled"
+		statusLabel.TextColor3 = Color3.fromRGB(160, 160, 170)
+		if godConnection then
+			godConnection:Disconnect()
+			godConnection = nil
+		end
+	end
+end)
+
+-- FPS + MS Counter
+local lastTime = tick()
+local frames = 0
+local fps = 0
+
+RunService.RenderStepped:Connect(function()
+	frames += 1
+	local now = tick()
+	if now - lastTime >= 1 then
+		fps = frames
+		frames = 0
+		lastTime = now
+	end
+
+	local ms = math.floor((1 / math.max(fps, 1)) * 1000)
+	fpsMsLabel.Text = string.format("FPS: %d  |  MS: %d", fps, ms)
+end)
+
+-- Avatar Weight Editor
+applyWeightBtn.MouseButton1Click:Connect(function()
+	local weight = tonumber(weightBox.Text)
+	if not weight or weight <= 0 then
+		statusLabel.Text = "Enter a valid number > 0"
+		statusLabel.TextColor3 = Color3.fromRGB(255, 150, 80)
+		return
+	end
+
+	local char = player.Character
+	if not char then
+		statusLabel.Text = "No character found"
+		statusLabel.TextColor3 = Color3.fromRGB(255, 90, 90)
+		return
+	end
+
+	local success = pcall(function()
+		for _, part in pairs(char:GetDescendants()) do
+			if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+				-- Keep friction / elasticity, only change density (weight)
+				local current = part.CustomPhysicalProperties or PhysicalProperties.new(0.7, 0.3, 0.5)
+				part.CustomPhysicalProperties = PhysicalProperties.new(
+					weight,          -- Density (this is the "weight")
+					current.Friction,
+					current.Elasticity,
+					current.FrictionWeight,
+					current.ElasticityWeight
+				)
+			end
+		end
+	end)
+
+	if success then
+		statusLabel.Text = "Weight set to " .. tostring(weight)
+		statusLabel.TextColor3 = Color3.fromRGB(80, 220, 120)
+	else
+		statusLabel.Text = "Failed to set weight"
+		statusLabel.TextColor3 = Color3.fromRGB(255, 90, 90)
+	end
+end)
+
+-- Start on Loader
+switchTab("Loader")
